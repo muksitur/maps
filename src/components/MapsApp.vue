@@ -71,12 +71,8 @@
                     </div>
                 </div>
             </div>
-            <!-- this column is for handling the places -->
-            <div class="">
-                
-                <!-- this is the list of all places -->
-                
-            </div>
+            
+            
             <!-- this column is for the map -->
             <div class="" @click="sidebarClose()">
                 <Map :places="places"/>
@@ -86,7 +82,7 @@
                 <div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
-                            <img id="placeImage" :src="'http://localhost:8080/images/'+imgURL+'.jpg'">
+                            <img id="placeImage" :src="'http://localhost:8080/images/'+imgURL+'.jpg'" alt="NoImage">
                         </div>
                     </div>
                 </div>
@@ -103,8 +99,10 @@
 
 
 <script>
-import axios from 'axios'
+// import axios from 'axios'
 import Map from './Map.vue'
+import {store} from '../store/store.js'
+
 
 export default {
     components:{
@@ -112,13 +110,14 @@ export default {
     },
     data() {
         return {
+            store: store,
             places:[],
             place:{
                 name:"",
                 latitude:"",
-                longitude:"",
-                imgURL:''
-            }
+                longitude:""
+            },
+            imgURL:''
         }
     },
 
@@ -135,54 +134,134 @@ export default {
             }
         },
         loadImage(place){
-            axios.get('http://localhost:3000/images/'+place.imageURL).then((response) => {
-                this.imgURL = response.data.imageURL;
-                // document.getElementById('placeImage').src = 'http://localhost:8080/images/'+imgURL+'.jpg';
-                axios.get('http://localhost:3000/maps').then((res) => {
-                    this.places = res.data;
-                });
-            });
+            let temp = this;
+            this.store.commit('GetImageByImageURL', place.imageURL);
+            var waitForGetImage = setInterval(function() {
+                if(temp.store.state.GetImageByImageURL === true){
+                    stopWaitForGetImage();
+                }
+            }, 10);
+
+            function stopWaitForGetImage() {
+                clearInterval(waitForGetImage);
+                temp.imgURL = temp.store.state.imgURL;
+                
+                temp.store.commit('GetAllPlaces');
+                var waitForAllPlaces = setInterval(function() {
+                    if(temp.store.state.GetAllPlaces === true){
+                        stopWaitForAllPlaces();
+                    }
+                }, 10);
+
+                function stopWaitForAllPlaces() {
+                    clearInterval(waitForAllPlaces);
+                    temp.places = temp.store.state.places;
+                }
+            }
+
         },
         update(place){
             // console.log(document.getElementById('editName'+place.id.toString()).value);
-            axios.put('http://localhost:3000/maps/'+place.id,
-            {
+            let temp = this;
+            this.store.state.updateBody = {
                 name:document.getElementById('editName'+place.id.toString()).value,
-                imageURL:document.getElementById('editImageName'+place.id.toString()).value
-            }).then((response) => {
-                console.log(response.data);
-                axios.get('http://localhost:3000/maps').then((res) => {
-                    this.places = res.data;
-                });
-            });
+                imageURL:document.getElementById('editImageName'+place.id.toString()).value 
+            }
+
+            // console.log(body);
+            
+            this.store.commit('UpdatePlaceById', place.id);
+            var waitForUpdatePlaceById = setInterval(function(){
+                if(temp.store.state.UpdatePlaceById === true){
+                    stopWaitForUpdatePlaceById();
+                }
+            }, 10);
+
+            function stopWaitForUpdatePlaceById() {
+                clearInterval(waitForUpdatePlaceById);
+
+                temp.store.commit('GetAllPlaces');
+                var waitForAllPlaces = setInterval(function() {
+                    if(temp.store.state.GetAllPlaces === true){
+                        stopWaitForAllPlaces();
+                    }
+                }, 10);
+
+                function stopWaitForAllPlaces() {
+                    clearInterval(waitForAllPlaces);
+                    temp.places = temp.store.state.places;
+                }
+            }
         },
         remove(place){
             // console.log(document.getElementById('editName'+place.id.toString()).value);
-            axios.delete('http://localhost:3000/maps/'+place.id).then((response) => {
-                console.log(response.data);
-                axios.get('http://localhost:3000/maps').then((res) => {
-                    this.places = res.data;
-                });
-            });
+            let temp = this;
+            this.store.commit('DeletePlaceById', place.id);
+            var waitForDeletePlaceById = setInterval(function(){
+                if(temp.store.state.DeletePlaceById === true){
+                    stopWaitForDeletePlaceById();
+                }
+            }, 10);
+
+            function stopWaitForDeletePlaceById() {
+                clearInterval(waitForDeletePlaceById);
+
+                temp.store.commit('GetAllPlaces');
+                var waitForAllPlaces = setInterval(function() {
+                    if(temp.store.state.GetAllPlaces === true){
+                        stopWaitForAllPlaces();
+                    }
+                }, 10);
+
+                function stopWaitForAllPlaces() {
+                    clearInterval(waitForAllPlaces);
+                    temp.places = temp.store.state.places;
+                }
+            }
         },
         add(){
-            axios.post('http://localhost:3000/maps', this.place).then((response) =>{
-                console.log(response.data);
-                axios.get('http://localhost:3000/maps').then((res) => {
-                    this.places = res.data;
-                    this.place.name = "";
-                    this.place.latitude = "";
-                    this.place.longitude = "";
-                });
-            });
+            let temp = this;
+            this.store.commit('AddPlace', this.place);
+            var waitForAddPlace = setInterval(function() {
+                if(temp.store.state.AddPlace === true){
+                    stopWaitForAddPlace();
+                }
+            }, 10);
+
+            function stopWaitForAddPlace() {
+                clearInterval(waitForAddPlace);
+
+                temp.store.commit('GetAllPlaces');
+                var waitForAllPlaces = setInterval(function() {
+                    if(temp.store.state.GetAllPlaces === true){
+                        stopWaitForAllPlaces();
+                    }
+                }, 10);
+
+                function stopWaitForAllPlaces() {
+                    clearInterval(waitForAllPlaces);
+                    temp.places = temp.store.state.places;
+                    temp.place.name = "";
+                    temp.place.latitude = "";
+                    temp.place.longitude = "";
+                }
+            }
         }
     },
 
     mounted() {
-        axios.get('http://localhost:3000/maps').then((response) => {
-            // console.log(response.data);
-            this.places = response.data;
-        });
+        let temp = this;
+        this.store.commit('GetAllPlaces');
+        var waitForAllPlaces = setInterval(function() {
+            if(temp.store.state.GetAllPlaces === true){
+                stopWaitForAllPlaces();
+            }
+        }, 10);
+
+        function stopWaitForAllPlaces() {
+            clearInterval(waitForAllPlaces);
+            temp.places = temp.store.state.places;
+        }
     },
 }
 </script>

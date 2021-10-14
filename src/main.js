@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import App from './App.vue'
 import 'leaflet/dist/leaflet.css';
-
+import {store} from './store/store'
 import { Icon } from 'leaflet';
 
 delete Icon.Default.prototype._getIconUrl;
@@ -15,4 +15,5 @@ Vue.config.productionTip = false
 
 new Vue({
   render: h => h(App),
+  store
 }).$mount('#app')
