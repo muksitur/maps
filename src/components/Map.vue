@@ -1,6 +1,6 @@
 <template>
     <div class="row map">
-        <LMap :zoom="zoom" :center="center">
+        <LMap :zoom="zoom" :center="center" style="z-index: 1;">
             <LTileLayer :url="url" :attribution="attribution"></LTileLayer>
             <LMarker :key="index" v-for="(place, index) in places" :lat-lng="latLng(Number(place.latitude), Number(place.longitude))">
                 <!-- icon small if not clicked -->
