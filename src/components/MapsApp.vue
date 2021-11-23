@@ -98,10 +98,10 @@
 </template>
 
 
-<script>
+<script lang="ts">
 // import axios from 'axios'
 import Map from './Map.vue'
-import {store} from '../store/store.js'
+import {store} from '../store/store'
 
 
 export default {
@@ -134,8 +134,9 @@ export default {
             }
         },
         loadImage(place){
-            let temp = this;
-            this.store.commit('GetImageByImageURL', place.imageURL);
+            // init temp. And use temp istead of this, to avoid error
+            let temp: any = this;
+            temp.store.commit('GetImageByImageURL', place.imageURL);
             var waitForGetImage = setInterval(function() {
                 if(temp.store.state.GetImageByImageURL === true){
                     stopWaitForGetImage();
@@ -162,15 +163,17 @@ export default {
         },
         update(place){
             // console.log(document.getElementById('editName'+place.id.toString()).value);
-            let temp = this;
-            this.store.state.updateBody = {
-                name:document.getElementById('editName'+place.id.toString()).value,
-                imageURL:document.getElementById('editImageName'+place.id.toString()).value 
+            // init temp. And use temp istead of this, to avoid error
+            let temp: any = this;
+            temp.store.state.updateBody = {
+                // type cast <HTMLInputElement> to avoid error
+                name:(<HTMLInputElement>document.getElementById('editName'+place.id.toString())).value,
+                imageURL:(<HTMLInputElement>document.getElementById('editImageName'+place.id.toString())).value 
             }
 
             // console.log(body);
             
-            this.store.commit('UpdatePlaceById', place.id);
+            temp.store.commit('UpdatePlaceById', place.id);
             var waitForUpdatePlaceById = setInterval(function(){
                 if(temp.store.state.UpdatePlaceById === true){
                     stopWaitForUpdatePlaceById();
@@ -195,8 +198,9 @@ export default {
         },
         remove(place){
             // console.log(document.getElementById('editName'+place.id.toString()).value);
-            let temp = this;
-            this.store.commit('DeletePlaceById', place.id);
+            // init temp. And use temp istead of this, to avoid error
+            let temp: any = this;
+            temp.store.commit('DeletePlaceById', place.id);
             var waitForDeletePlaceById = setInterval(function(){
                 if(temp.store.state.DeletePlaceById === true){
                     stopWaitForDeletePlaceById();
@@ -220,8 +224,9 @@ export default {
             }
         },
         add(){
-            let temp = this;
-            this.store.commit('AddPlace', this.place);
+            // init temp. And use temp istead of this, to avoid error
+            let temp: any = this;
+            temp.store.commit('AddPlace', temp.place);
             var waitForAddPlace = setInterval(function() {
                 if(temp.store.state.AddPlace === true){
                     stopWaitForAddPlace();
@@ -250,8 +255,9 @@ export default {
     },
 
     mounted() {
-        let temp = this;
-        this.store.commit('GetAllPlaces');
+        // init temp. And use temp istead of this, to avoid error
+        let temp: any = this;
+        temp.store.commit('GetAllPlaces');
         var waitForAllPlaces = setInterval(function() {
             if(temp.store.state.GetAllPlaces === true){
                 stopWaitForAllPlaces();

@@ -4,15 +4,17 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import Vue from 'vue';
 import MapsApp from './components/MapsApp.vue'
 
-export default {
+export default Vue.extend({
   name: 'App',
   components: {
     MapsApp
+
   }
-}
+});
 </script>
 
 <style>

@@ -15,7 +15,7 @@ export const store = new Vuex.Store({
         AddPlace: false,
         DeletePlaceById: false,
         UpdatePlaceById: false,
-        updateBody: null
+        updateBody: {}
     },
 
 
