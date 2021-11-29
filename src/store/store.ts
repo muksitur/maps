@@ -44,7 +44,7 @@ export const store = new Vuex.Store({
         AddPlace(state, place){
             state.AddPlace = false;
             axios.post('http://localhost:3000/maps', place).then((response) =>{
-                console.log(response.data);
+                state.places = response.data;
                 state.AddPlace = true;
             });
         },
@@ -52,7 +52,7 @@ export const store = new Vuex.Store({
         DeletePlaceById(state, id){
             state.DeletePlaceById = false;
             axios.delete('http://localhost:3000/maps/'+id).then((response) => {
-                console.log(response.data);
+                state.places = response.data;
                 state.DeletePlaceById = true;
             });
         },
@@ -61,10 +61,8 @@ export const store = new Vuex.Store({
             // console.log(place);
             state.UpdatePlaceById = false
             axios.put('http://localhost:3000/maps/'+id, state.updateBody).then((response) => {
-                console.log(response.data);
+                state.places = response.data;
                 state.UpdatePlaceById = true;
-            }).catch((error) => {
-                console.error(error);
             });
         }
     }

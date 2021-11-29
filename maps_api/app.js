@@ -1,30 +1,32 @@
+// import express
 const express = require('express');
-
+// use express in the app.js
 const app = express();
-
+// import mongoose
+const mongoose = require('mongoose');
+// import .env file
+require('dotenv/config');
+// import bodyParser to parse req and res into JSON
 const bodyParser = require('body-parser');
+// use bodyParser in the app.js
 app.use(bodyParser.json());
-
+// import FileSystem for changing local file directory
 var fs = require('fs');
+// import DB model Place.js
+const Place = require('./models/Place');
 
 
 // init places
 
 // Since we allow to change the name of the resource/image files, it makes more sense if we store the changes. We could use a persistant database like
-// e.g.: Mongoose, instead we are using a temporary solution. We are storing it in places.json file.
+// e.g.: MongoDB
 let places;
-fs.readFile('places.json', (err, data) => {
-    if (err) throw err;
-    places = JSON.parse(data);
-    console.log(places);
-});
-// var places = [
-//     {id: 1, name:"place 1", latitude: "38.8951", longitude: "77.0364", imageURL:"place1", clicked:false},
-//     {id: 2, name:"place 2", latitude: "34.8951", longitude: "74.0364", imageURL:"place2", clicked:false},
-//     {id: 3, name:"place 3", latitude: "30.8951", longitude: "70.0364", imageURL:"place3", clicked:false},
-//     {id: 4, name:"place 4", latitude: "48.8951", longitude: "87.0364", imageURL:"place4", clicked:false},
-//     {id: 5, name:"place 5", latitude: "42.8951", longitude: "67.0364", imageURL:"place5", clicked:false}
-// ]
+
+// Connect to DB
+mongoose.connect(process.env.DB_CONNECTION,
+    {useNewUrlParser: true},
+    () => console.log('connected to DB')
+);
 
 // Middleware
 
@@ -37,36 +39,69 @@ app.get('/', (req, res) =>{
 });
 
 // access point for getting all places
-app.get('/maps', (req, res) =>{
-    res.send(places);
+app.get('/maps', async (req, res) =>{
+    try {
+        places = await Place.find();
+        res.send(places);
+    } catch (error) {
+        res.json({ message: error});
+    }
 });
 
 // access point for getting an image by imageURL
-app.get('/images/:imageURL', (req, res) =>{
+app.get('/images/:imageURL', async(req, res) =>{
     const imageURL = req.params.imageURL;
-    for (let index = 0; index < places.length; index++) {
-        places[index].clicked = false;
-        if (imageURL === places[index].imageURL) {
-            places[index].clicked = true;
-            res.send(places[index]);
+    let place;
+    let id;
+    try {
+        places = await Place.find();
+        // console.log(places);
+        for (let index = 0; index < places.length; index++) {
+            id = places[index].id;
+            const notClikedPlace = await Place.updateOne(
+                {id: id},
+                { $set: {clicked: false}}
+            );
+            if (imageURL === places[index].imageURL) {
+                id = places[index].id;
+                const clikedPlace = await Place.updateOne(
+                    {id: id},
+                    { $set: {clicked: true}}
+                );
+            }
         }
+        places = await Place.find();
+        for (let index = 0; index < places.length; index++) {
+            if(imageURL === places[index].imageURL){
+                res.send(places[index]);
+            }
+        }
+    } catch (error) {
+        res.send('could not find image');
     }
-    res.send('could not find image');
 });
 
 // access point for getting a place by id
-app.get('/maps/:id', (req, res) =>{
+// // // // **** Important: please look into this find later if you can
+app.get('/maps/:id', async (req, res) =>{
     const id = req.params.id;
-    for (let index = 0; index < places.length; index++) {
-        if (id === places[index].id.toString()) {
-            res.send(places[index]);
+    try {
+        const places = await Place.find;
+        console.log(places);
+        for (let index = 0; index < places.length; index++) {
+            if(id === places[index].id.toString){
+                const place = places[index];
+                res.send(place);
+            }
         }
+    } catch (error) {
+        res.json({ message: error});
+        res.send('could not find place');
     }
-    res.send('could not find place');
 });
 
 // access point for adding a new place
-app.post('/maps', (req, res) =>{
+app.post('/maps', async (req, res) =>{
     // since the uuid is limited to 100, this can add upto 100 places
     var uuid = Math.floor(Math.random() * 100)+1;
     for (let index = 0; index < places.length; index++) {
@@ -80,56 +115,67 @@ app.post('/maps', (req, res) =>{
     req.body.id = uuid;
     req.body.imageURL = imageURL;
     req.body.clicked = false;
-    // console.log(req.body);
-    places.push(req.body);
-    console.log(places);
 
-    // writing the change into places.json file
-    let data = JSON.stringify(places);
-    fs.writeFileSync('places.json', data);
+    // add a new Place instance as DB model
+    const place = new Place({
+        id: req.body.id,
+        name: req.body.name,
+        latitude: req.body.latitude,
+        longitude: req.body.longitude,
+        imageURL: req.body.imageURL,
+        clicked: req.body.clicked
+    });
 
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.send('place added');
+    try {
+        const savedPlace = await place.save();
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        places = await Place.find();
+        res.send(places);
+    } catch (error) {
+        res.json({ message: error});
+    }
+
 });
 
 // access point for deleting places
-app.delete('/maps/:id', (req, res) =>{
-    const id = req.params.id;
-    for (let index = 0; index < places.length; index++) {
-        if (id === places[index].id.toString()) {
-            places.splice(index, 1);
-
-            // writing the change into places.json file
-            let data = JSON.stringify(places);
-            fs.writeFileSync('places.json', data);
-
-            res.send('place deleted');
-        }
+app.delete('/maps/:id', async (req, res) =>{
+    const id = parseInt(req.params.id);
+    try {
+        const deletedPlace = await Place.remove({id: id});
+        places = await Place.find();
+        res.send(places);
+    } catch (error) {
+        res.json({ message: error});
+        res.send('could not find place to delete');
     }
-    res.send('could not find place to delete');
+
 });
 
 // access point for updating places
-app.put('/maps/:id', (req, res) =>{
-    const id = req.params.id;
+app.put('/maps/:id', async (req, res) =>{
+    const id = parseInt(req.params.id);
+    let imageURL;
     for (let index = 0; index < places.length; index++) {
-        if (id === places[index].id.toString()) {
-            // renaming place name
-            places[index].name = req.body.name;
-            // renaming image file path
-            fs.rename('../public/images/'+places[index].imageURL+'.jpg', '../public/images/'+req.body.imageURL+'.jpg', function(err) {
-                if ( err ) console.log('ERROR: ' + err);
-            });
-            places[index].imageURL = req.body.imageURL;
-            
-            // writing the change into places.json file
-            let data = JSON.stringify(places);
-            fs.writeFileSync('places.json', data);
-            
-            res.setHeader('Access-Control-Allow-Origin', '*');
-            res.send('place updated');
+        if(id === places[index].id){
+            imageURL = places[index].imageURL;
         }
     }
-})
+    try {
+        const updatedPlace = await Place.updateOne(
+            {id: id},
+            { $set: {name: req.body.name, imageURL: req.body.imageURL}}
+        );
+        places = await Place.find();
+        res.send(places);
+        fs.rename('../public/images/'+imageURL+'.jpg', '../public/images/'+req.body.imageURL+'.jpg', function(err) {
+            if ( err ) console.log('ERROR: ' + err);
+        });
+
+    } catch (error) {
+        res.json({ message: error});
+        res.send('could not find place to update');
+    }
+
+});
 
 app.listen(3000);

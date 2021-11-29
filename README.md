@@ -45,3 +45,20 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
     let temp: any = this;
     and use "temp" instead of "this"
 10. first save all changes. then "npm run build" and check compiling error. Then "npm run serve"
+
+
+### Mongoose infos
+1. Run "npm install mongoose" in the directory /maps_api 
+2. Run "npm install dotenv" in the directory /maps_api for initializing environment variables
+3. add /models/Place.js for the DB model Place in the directory /maps_api
+4. Mongoose functions work perfectly: find(), updateOne(), save(), remove()
+5. Mongoose functions do not work, and need to check later: findById()
+6. MongoDB account url: cloud.mongodb.com
+    user name: muksitur9191@gmail.com
+    password: regna9191
+7. Follow example_MongoDB_cluster.png as reference for better understanding
+8. Database access: follow /maps_api/.env as reference
+9. Network access: any IP address
+10. Databases tab:
+    Browse collections
+    connect: connect using MongoDB compass
